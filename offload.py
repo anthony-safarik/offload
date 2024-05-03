@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 import time
 import datetime
+import sys
 
 class FileWalker:
     def __init__(self, source_path):
@@ -52,30 +53,53 @@ class FileWalker:
 
             self.file_info[str(file_path.relative_to(self.source_path))] = file_info_dict
 
-        for info_dict in self.file_info.values(): print (info_dict)
+        # for info_dict in self.file_info.values(): print (info_dict)
 
 #########################################################################################
-    def compare_files(self, other):
+    def file_paths_match(self, other):
         return sorted(self.file_paths.keys()) == sorted(other.file_paths.keys())
     
     def minus(self, other):
         return [x for x in self.file_paths.keys() if x not in other.file_paths.keys()]
+    
+    def size_unequal(self, other):
+        unequal_path_keys = []
+        for x in self.file_info.keys():
+            if x in other.file_info.keys():
+                if self.file_info[x]['Bytes'] != other.file_info[x]['Bytes']:
+                    unequal_path_keys.append(x)
+        return unequal_path_keys
 
 # Example usage
 if __name__ == "__main__":
-    source_directory = input("Enter the source path: ")
+
+    if len(sys.argv) > 1:
+        source_directory = sys.argv[1]
+    else:
+        source_directory = input("Enter the source path: ")
+
+    if len(sys.argv) > 2:
+        compare_directory = sys.argv[2]
+    else:
+        compare_directory = input("Enter the compare path: ")
+
+
+
+
     walker = FileWalker(source_directory)
     walker.walk_directory()
+
+    # Compare file paths
+    walker2 = FileWalker(compare_directory)
+    walker2.walk_directory()
+
+    print (f'\nExtra files in {source_directory} \n {walker.minus(walker2)}\n')
+    print (f'\nExtra files in {compare_directory} \n {walker2.minus(walker)}\n')
+
+    print(f'File paths are a perfect match?: {walker.file_paths_match(walker2)}')
+
+    # Compare file metadata
     walker.get_file_info()
+    walker2.get_file_info()
 
-#compare_files 
-    # compare_directory = input("Enter the compare path: ")
-    # walker2 = FileWalker(compare_directory)
-    # walker2.walk_directory()
-
-    # print(walker.minus(walker2))
-    # print(walker2.minus(walker))
-    # print (walker.compare_files(walker2))
-
-    # walker.print_modified_time()
-    # walker2.get_file_info()
+    print (f'\nSizes do not match:\n{walker.size_unequal(walker2)}\n')
