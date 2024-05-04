@@ -3,6 +3,7 @@ import os
 import time
 import datetime
 import sys
+import hashlib
 
 class FileWalker:
     def __init__(self, source_path):
@@ -40,7 +41,7 @@ class FileWalker:
 
 #########################################################################################
     @time_it
-    def get_file_info(self):
+    def get_file_info2(self):
         for file_path in self.file_paths.values():
             full_file_path = str(file_path.resolve())
             file_size = file_path.stat().st_size
@@ -53,7 +54,40 @@ class FileWalker:
 
             self.file_info[str(file_path.relative_to(self.source_path))] = file_info_dict
 
-        # for info_dict in self.file_info.values(): print (info_dict)
+    #copilot version:
+    def get_file_info(self):
+        for file_path in self.file_paths.values():
+            full_file_path = str(file_path.resolve())
+            file_size = file_path.stat().st_size
+            mtime = file_path.stat().st_mtime
+            timestamp_str = datetime.datetime.fromtimestamp(mtime).strftime('%Y-%m-%d')
+
+            # Get the relative path
+            relative_path = str(file_path.relative_to(self.source_path))
+
+            # Use setdefault to create / update the dictionary entry
+            file_info_dict = self.file_info.setdefault(relative_path, {})
+            file_info_dict.update({
+                'File Path': full_file_path,
+                'Bytes': file_size,
+                'MD5': '',
+                'Date': timestamp_str
+            })
+
+    def get_file_md5(self):
+        for file_path in self.file_paths.values():
+            full_file_path = str(file_path.resolve())
+            # Calculate the MD5 hash
+            file_hash = self.calculate_md5(full_file_path)
+            # Get the relative path
+            relative_path = str(file_path.relative_to(self.source_path))
+
+            # Use setdefault to create / update the dictionary entry
+            file_info_dict = self.file_info.setdefault(relative_path, {})
+            file_info_dict.update({
+                'MD5': file_hash
+            })
+
 
 #########################################################################################
     def file_paths_match(self, other):
@@ -69,6 +103,23 @@ class FileWalker:
                 if self.file_info[x]['Bytes'] != other.file_info[x]['Bytes']:
                     unequal_path_keys.append(x)
         return unequal_path_keys
+    
+    def md5_unequal(self, other):
+        unequal_path_keys = []
+        for x in self.file_info.keys():
+            if x in other.file_info.keys():
+                if self.file_info[x]['MD5'] != other.file_info[x]['MD5']:
+                    unequal_path_keys.append(x)
+        return unequal_path_keys
+
+    @staticmethod
+    def calculate_md5(file_path):
+        """Calculate the MD5 hash of a file."""
+        md5_hash = hashlib.md5()
+        with open(file_path, "rb") as file:
+            for chunk in iter(lambda: file.read(4096), b""):
+                md5_hash.update(chunk)
+        return md5_hash.hexdigest()
 
 # Example usage
 if __name__ == "__main__":
@@ -103,3 +154,11 @@ if __name__ == "__main__":
     walker2.get_file_info()
 
     print (f'\nSizes do not match:\n{walker.size_unequal(walker2)}\n')
+
+    walker.get_file_md5()
+    walker2.get_file_md5()
+
+    print (f'MD5 do not match:\n{walker.md5_unequal(walker2)}\n')
+
+    # for entry in walker.file_info.values():
+    #     print (entry['File Path'], entry['MD5'])
