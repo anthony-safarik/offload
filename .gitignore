@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # tsafarik trials
-*dev-
+dev-*
