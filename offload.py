@@ -10,6 +10,7 @@ class FileWalker:
         self.source_path = Path(source_path)
         self.file_paths = {}
         self.file_info = {}
+        self.file_hashes = {}
 
     def time_it(func):
         def wrapper(*args, **kwargs):
@@ -88,6 +89,12 @@ class FileWalker:
                 'MD5': file_hash
             })
 
+            # Add file_info_dict to file_hashes dict: {MD5: [{file_info_dict}]}
+            if file_hash not in self.file_hashes:
+                self.file_hashes[file_hash] = [file_info_dict]
+            else:
+                self.file_hashes[file_hash].append(file_info_dict)
+
 
 #########################################################################################
     def file_paths_match(self, other):
@@ -160,5 +167,9 @@ if __name__ == "__main__":
 
     print (f'MD5 do not match:\n{walker.md5_unequal(walker2)}\n')
 
-    # for entry in walker.file_info.values():
-    #     print (entry['File Path'], entry['MD5'])
+    print('********************************************')
+    # for key, entry in walker.file_hashes.values():
+    for key in walker.file_hashes.keys():
+        print (key, len(walker.file_hashes[key]))
+        if len(walker.file_hashes[key]) > 1:
+            print (walker.file_hashes[key])
