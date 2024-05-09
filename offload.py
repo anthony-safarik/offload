@@ -4,6 +4,7 @@ import time
 import datetime
 import sys
 import hashlib
+import csv
 
 class FileWalker:
     def __init__(self, source_path):
@@ -40,22 +41,7 @@ class FileWalker:
             timestamp_str = datetime.datetime.fromtimestamp(mtime).strftime('%Y-%m-%d')
             print(f'{file_path.relative_to(self.source_path)} --- {timestamp_str}')
 
-#########################################################################################
     @time_it
-    def get_file_info2(self):
-        for file_path in self.file_paths.values():
-            full_file_path = str(file_path.resolve())
-            file_size = file_path.stat().st_size
-            mtime = file_path.stat().st_mtime
-            timestamp_str = datetime.datetime.fromtimestamp(mtime).strftime('%Y-%m-%d')
-
-            file_info_dict = {'File Path': full_file_path,
-                          'Bytes': file_size,
-                          'Date': timestamp_str}
-
-            self.file_info[str(file_path.relative_to(self.source_path))] = file_info_dict
-
-    #copilot version:
     def get_file_info(self):
         for file_path in self.file_paths.values():
             full_file_path = str(file_path.resolve())
@@ -75,6 +61,7 @@ class FileWalker:
                 'Date': timestamp_str
             })
 
+    @time_it
     def get_file_md5(self):
         for file_path in self.file_paths.values():
             full_file_path = str(file_path.resolve())
@@ -94,7 +81,34 @@ class FileWalker:
                 self.file_hashes[file_hash] = [file_info_dict]
             else:
                 self.file_hashes[file_hash].append(file_info_dict)
+#########################################################################################
+    def write_dicts_to_csv(self, data_list, filename):
+        """
+        Writes a list of dictionaries to a CSV file.
 
+        Args:
+            data_list (list[dict]): List of dictionaries containing data.
+            filename (str): Name of the CSV file to create.
+
+        Returns:
+            None
+        """
+        try:
+            with open(filename, 'w', newline='') as csvfile:
+                fieldnames = data_list[0].keys() if data_list else []
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+                for row in data_list:
+                    writer.writerow(row)
+            print(f"Data written to {filename} successfully!")
+        except Exception as e:
+            print(f"Error writing to {filename}: {e}")
+
+
+    def print_types(*args):
+        for arg in args:
+            # print(f"Type of {arg}: {type(arg).__name__}")
+            print(f"Type: {type(arg).__name__}")
 
 #########################################################################################
     def file_paths_match(self, other):
@@ -168,8 +182,12 @@ if __name__ == "__main__":
     print (f'MD5 do not match:\n{walker.md5_unequal(walker2)}\n')
 
     print('********************************************')
-    # for key, entry in walker.file_hashes.values():
-    for key in walker.file_hashes.keys():
-        print (key, len(walker.file_hashes[key]))
-        if len(walker.file_hashes[key]) > 1:
-            print (walker.file_hashes[key])
+    dicts_for_csv = list(walker.file_info.values())
+    # print(len((dicts_for_csv),'/Users/tonysafarik/_scratch/output.csv'))
+    walker.write_dicts_to_csv(dicts_for_csv, str(walker.source_path)+'_FILE_INFO.csv')
+
+    #CHECK WHICH FILES ARE DUPES. TODO>REDUCE REDUNDANCY BETWEEN FILE INFO AND FILE HASHES
+    # for key in walker.file_hashes.keys():
+    #     print (key, len(walker.file_hashes[key]))
+    #     if len(walker.file_hashes[key]) > 1:
+    #         print (walker.file_hashes[key])
