@@ -142,8 +142,9 @@ class FileWalker:
                 md5_hash.update(chunk)
         return md5_hash.hexdigest()
 
-# Example usage
 if __name__ == "__main__":
+
+    check_file_hashes = False
 
     if len(sys.argv) > 1:
         source_directory = sys.argv[1]
@@ -154,40 +155,3 @@ if __name__ == "__main__":
         compare_directory = sys.argv[2]
     else:
         compare_directory = input("Enter the compare path: ")
-
-
-
-
-    walker = FileWalker(source_directory)
-    walker.walk_directory()
-
-    # Compare file paths
-    walker2 = FileWalker(compare_directory)
-    walker2.walk_directory()
-
-    print (f'\nExtra files in {source_directory} \n {walker.minus(walker2)}\n')
-    print (f'\nExtra files in {compare_directory} \n {walker2.minus(walker)}\n')
-
-    print(f'File paths are a perfect match?: {walker.file_paths_match(walker2)}')
-
-    # Compare file metadata
-    walker.get_file_info()
-    walker2.get_file_info()
-
-    print (f'\nSizes do not match:\n{walker.size_unequal(walker2)}\n')
-
-    walker.get_file_md5()
-    walker2.get_file_md5()
-
-    print (f'MD5 do not match:\n{walker.md5_unequal(walker2)}\n')
-
-    print('********************************************')
-    dicts_for_csv = list(walker.file_info.values())
-    # print(len((dicts_for_csv),'/Users/tonysafarik/_scratch/output.csv'))
-    walker.write_dicts_to_csv(dicts_for_csv, str(walker.source_path)+'_FILE_INFO.csv')
-
-    #CHECK WHICH FILES ARE DUPES. TODO>REDUCE REDUNDANCY BETWEEN FILE INFO AND FILE HASHES
-    # for key in walker.file_hashes.keys():
-    #     print (key, len(walker.file_hashes[key]))
-    #     if len(walker.file_hashes[key]) > 1:
-    #         print (walker.file_hashes[key])
