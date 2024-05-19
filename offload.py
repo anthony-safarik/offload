@@ -26,9 +26,10 @@ class FileWalker:
     def walk_directory(self):
         for root, dirs, files in os.walk(self.source_path):
             for file_name in files:
-                file_path = Path(root) / file_name
-                # self.file_paths[str(file_path)] = file_path
-                self.file_paths[str(file_path.relative_to(self.source_path))] = file_path
+                if file_name != '.DS_Store' and file_name != '._.DS_Store':
+                    file_path = Path(root) / file_name
+                    # self.file_paths[str(file_path)] = file_path
+                    self.file_paths[str(file_path.relative_to(self.source_path))] = file_path
 
     def print_file_paths(self):
         for file_path in self.file_paths.values():
@@ -176,10 +177,10 @@ if __name__ == "__main__":
 
     print (f'\nSizes do not match:\n{walker.size_unequal(walker2)}\n')
 
-    walker.get_file_md5()
-    walker2.get_file_md5()
+    # walker.get_file_md5()
+    # walker2.get_file_md5()
 
-    print (f'MD5 do not match:\n{walker.md5_unequal(walker2)}\n')
+    # print (f'MD5 do not match:\n{walker.md5_unequal(walker2)}\n')
 
     print('********************************************')
     dicts_for_csv = list(walker.file_info.values())
