@@ -1,4 +1,4 @@
-from offload import FileWalker
+from walker import FileWalker
 import sys
 
 if __name__ == "__main__":

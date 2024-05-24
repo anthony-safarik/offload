@@ -111,7 +111,6 @@ class FileWalker:
             # print(f"Type of {arg}: {type(arg).__name__}")
             print(f"Type: {type(arg).__name__}")
 
-#########################################################################################
     def file_paths_match(self, other):
         return sorted(self.file_paths.keys()) == sorted(other.file_paths.keys())
     
@@ -177,17 +176,19 @@ if __name__ == "__main__":
 
     print (f'\nSizes do not match:\n{walker.size_unequal(walker2)}\n')
 
-    # walker.get_file_md5()
-    # walker2.get_file_md5()
+    walker.get_file_md5()
+    walker2.get_file_md5()
 
-    # print (f'MD5 do not match:\n{walker.md5_unequal(walker2)}\n')
+    # Compare contents
+    print (f'MD5 do not match:\n{walker.md5_unequal(walker2)}\n')
 
-    print('********************************************')
+    # Write file info to csv file
     dicts_for_csv = list(walker.file_info.values())
-    # print(len((dicts_for_csv),'/Users/tonysafarik/_scratch/output.csv'))
     walker.write_dicts_to_csv(dicts_for_csv, str(walker.source_path)+'_FILE_INFO.csv')
+    dicts_for_csv2 = list(walker2.file_info.values())
+    walker2.write_dicts_to_csv(dicts_for_csv2, str(walker2.source_path)+'_FILE_INFO.csv')
 
-    #CHECK WHICH FILES ARE DUPES. TODO>REDUCE REDUNDANCY BETWEEN FILE INFO AND FILE HASHES
+    #PRINTS FILE INFO FOR DUPLICATE MD5
     # for key in walker.file_hashes.keys():
     #     print (key, len(walker.file_hashes[key]))
     #     if len(walker.file_hashes[key]) > 1:
