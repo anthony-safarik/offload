@@ -112,23 +112,17 @@ if __name__ == "__main__":
     source_directory = input("Enter the photos source dir: ")
     target_directory = input("Enter the photo copy dir: ")
     os.makedirs(target_directory, exist_ok=True)
+
     rsync_dated_photos(source_directory, target_directory)
 
-##########################################################
     walker = FileWalker(source_directory)
     walker.walk_directory()
 
-    # Compare file paths
     walker2 = FileWalker(target_directory)
     walker2.walk_directory()
 
-    print (f'\nExtra files in {source_directory} \n {walker.minus(walker2)}\n')
-    print (f'\nExtra files in {target_directory} \n {walker2.minus(walker)}\n')
-
-    print(f'File paths are a perfect match?: {walker.file_paths_match(walker2)}')
-
     print('********************COMPARE MD5************************')
-    input('PAUSED.. hit return to continue')
+    # input('PAUSED.. hit return to continue')
     
     # Compare file metadata
     walker.get_file_info()
@@ -148,9 +142,8 @@ if __name__ == "__main__":
 
     walker_keys = list(walker.file_hashes.keys())
     walker2_keys = list(walker2.file_hashes.keys())
+
     print (f'\nFiles missing from {target_directory}')
     print(list(x for x in walker_keys if x not in walker2_keys))
-##########################################################
-
 
     print('Offload Completed')
