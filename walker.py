@@ -6,6 +6,132 @@ import sys
 import hashlib
 import csv
 
+class AutoWalker:
+    def __init__(self, source_path):
+
+        self.source_path = Path(source_path)
+        self.file_info = {}
+        self.file_count = 0
+        self.total_size = 0
+        self.file_signatures = []
+
+        if os.path.isdir(source_path):
+            for root, dirs, files in os.walk(self.source_path):
+                for file_name in files:
+                    if not file_name.startswith('.'): #skip hidden files
+                        file_path = Path(root) / file_name
+
+                        file_size = file_path.stat().st_size
+                        mtime = file_path.stat().st_mtime
+                        timestamp_str = datetime.datetime.fromtimestamp(mtime).strftime('%Y%m%d%H%M%S')
+                        relative_path = str(file_path.relative_to(self.source_path))
+
+                        # Use setdefault to create / update the dictionary entry
+                        file_info_dict = self.file_info.setdefault(relative_path, {})
+                        file_info_dict.update({
+                            'File Path': file_path, #file path is the posix path object
+                            'Source Path': source_path,
+                            'Relative Path': relative_path,
+                            'Bytes': file_size,
+                            'Extension': file_path.suffix,
+                            'Name': file_path.stem,
+                            'MD5': '',
+                            'Timestamp': timestamp_str
+                        })
+
+                        self.file_count += 1
+                        self.total_size += file_size
+                        self.file_signatures.append((timestamp_str, file_size, file_path.suffix))
+
+        self.file_hashes = {}
+
+    def time_it(func):
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            print(f"Function {func.__name__} took {end_time - start_time} seconds to run.")
+            return result
+        return wrapper
+
+    @time_it
+    def get_file_md5(self):
+        for file_path in self.file_paths.values():
+            full_file_path = str(file_path.resolve())
+            # Calculate the MD5 hash
+            file_hash = self.calculate_md5(full_file_path)
+            # Get the relative path
+            relative_path = str(file_path.relative_to(self.source_path))
+
+            # Use setdefault to create / update the dictionary entry
+            file_info_dict = self.file_info.setdefault(relative_path, {})
+            file_info_dict.update({
+                'MD5': file_hash
+            })
+
+    def dump_csv(self):
+        """Dumps a csv in the source path."""
+        dicts_for_csv = list(self.file_info.values())
+        self.write_dicts_to_csv(dicts_for_csv, str(self.source_path)+'_FILE_INFO.csv')
+
+    def file_paths_match(self, other):
+        """Returns whether two objects have mirrored file names and structure."""
+        return sorted(self.file_info.keys()) == sorted(other.file_info.keys())
+    
+    def missing_relative_paths(self, other):
+        """Return a list of relative paths that do not exist in the other walker object."""
+        return [x for x in self.file_info.keys() if x not in other.file_info.keys()]
+    
+    def missing_file_signatures_from(self, other):
+        """Return a list of signatures that do not exist in the other walker object."""
+        return [x for x in self.file_signatures if x not in other.file_signatures]
+    
+    def size_unequal(self, other):
+        unequal_path_keys = []
+        for x in self.file_info.keys():
+            if x in other.file_info.keys():
+                if self.file_info[x]['Bytes'] != other.file_info[x]['Bytes']:
+                    unequal_path_keys.append(x)
+        return unequal_path_keys
+    
+    def md5_unequal(self, other):
+        unequal_path_keys = []
+        for x in self.file_info.keys():
+            if x in other.file_info.keys():
+                if self.file_info[x]['MD5'] != other.file_info[x]['MD5']:
+                    unequal_path_keys.append(x)
+        return unequal_path_keys
+
+    @staticmethod
+    def write_dicts_to_csv(data_list, filename):
+        """
+        Writes a list of dictionaries to a CSV file.
+
+        Args:
+            data_list (list[dict]): List of dictionaries.
+            filename (str): Name of the CSV file to create.
+        """
+        try:
+            with open(filename, 'w', newline='') as csvfile:
+                fieldnames = data_list[0].keys() if data_list else []
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+                for row in data_list:
+                    writer.writerow(row)
+            print(f"Data written to {filename} successfully!")
+        except Exception as e:
+            print(f"Error writing to {filename}: {e}")
+
+    @staticmethod
+    def calculate_md5(file_path):
+        """Calculate the MD5 hash of a file."""
+        md5_hash = hashlib.md5()
+        with open(file_path, "rb") as file:
+            for chunk in iter(lambda: file.read(4096), b""):
+                md5_hash.update(chunk)
+        return md5_hash.hexdigest()
+
+
 class FileWalker:
     def __init__(self, source_path):
         self.source_path = Path(source_path)
@@ -155,41 +281,15 @@ if __name__ == "__main__":
     else:
         compare_directory = input("Enter the compare path: ")
 
-
-
-
-    walker = FileWalker(source_directory)
-    walker.walk_directory()
-
-    # Compare file paths
-    walker2 = FileWalker(compare_directory)
-    walker2.walk_directory()
-
-    print (f'\nExtra files in {source_directory} \n {walker.minus(walker2)}\n')
-    print (f'\nExtra files in {compare_directory} \n {walker2.minus(walker)}\n')
-
-    print(f'File paths are a perfect match?: {walker.file_paths_match(walker2)}')
-
-    # Compare file metadata
-    walker.get_file_info()
-    walker2.get_file_info()
-
-    print (f'\nSizes do not match:\n{walker.size_unequal(walker2)}\n')
-
-    walker.get_file_md5()
-    walker2.get_file_md5()
-
-    # Compare contents
-    print (f'MD5 do not match:\n{walker.md5_unequal(walker2)}\n')
-
-    # Write file info to csv file
+    walker = AutoWalker(source_directory)
     dicts_for_csv = list(walker.file_info.values())
-    walker.write_dicts_to_csv(dicts_for_csv, str(walker.source_path)+'_FILE_INFO.csv')
-    dicts_for_csv2 = list(walker2.file_info.values())
-    walker2.write_dicts_to_csv(dicts_for_csv2, str(walker2.source_path)+'_FILE_INFO.csv')
+    walker.dump_csv()
 
-    #PRINTS FILE INFO FOR DUPLICATE MD5
-    # for key in walker.file_hashes.keys():
-    #     print (key, len(walker.file_hashes[key]))
-    #     if len(walker.file_hashes[key]) > 1:
-    #         print (walker.file_hashes[key])
+    walker2 = AutoWalker(compare_directory)
+    dicts_for_csv2 = list(walker2.file_info.values())
+    walker2.dump_csv()
+
+    print (f'\nsource: {walker.source_path}\ncount: {walker.file_count}\nsize: {walker.total_size}')
+    
+    for i in walker.missing_file_signatures_from(walker2): print (i)
+
