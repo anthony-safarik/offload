@@ -130,3 +130,4 @@ dmypy.json
 
 # tsafarik trials
 dev-*
+.DS_Store
