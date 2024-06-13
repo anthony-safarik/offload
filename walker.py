@@ -131,7 +131,6 @@ class AutoWalker:
                 md5_hash.update(chunk)
         return md5_hash.hexdigest()
 
-
 class FileWalker:
     def __init__(self, source_path):
         self.source_path = Path(source_path)

@@ -7,6 +7,7 @@ class TestWalker(unittest.TestCase):
 
     def setUp(self):
         # Create temporary folders for testing
+        shutil.copytree('/Users/tonysafarik/_scratch/__INC__/INC_Photos/01_sync/THMBNL2','THMBNL')
         self.test_folder = "tests/dev-test_folder"
 
         os.makedirs(self.test_folder, exist_ok=True)
@@ -21,11 +22,11 @@ class TestWalker(unittest.TestCase):
         # Clean up temporary folders after testing
         shutil.rmtree(self.test_folder)
 
-    # def test_pause(self):
-    #     '''
-    #     test pause
-    #     '''
-    #     input('PAUSED.. hit return to continue')
+    def test_pause(self):
+        '''
+        test pause
+        '''
+        input('PAUSED.. hit return to continue')
 
     def test_pause(self):
         '''
