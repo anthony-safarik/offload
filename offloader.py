@@ -12,6 +12,7 @@ import subprocess
 import time
 from datetime import datetime
 from walker import FileWalker
+import hashlib
 
 now = time.strftime("%y%m%d_%H%M%S")
 
@@ -45,7 +46,7 @@ def get_file_paths(inpath):
                 yield os.path.join(path,item)
 
 def meets_conditions(text):
-    extensions=('jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mkv', 'arw')
+    extensions=('jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mkv', 'arw', 'mov')
     if os.path.basename(text).startswith('.'):
         return False
     if not text.lower().endswith(extensions):
@@ -172,6 +173,47 @@ def calculate_md5(file_path):
         for chunk in iter(lambda: file.read(4096), b""):
             md5_hash.update(chunk)
     return md5_hash.hexdigest()
+
+def create_sidecar_file(dst_path, sidecar_string, ext='md5'):
+    """Create a sidecar file with sidecar_string, such as MD5"""
+    sidecar_path = f"{dst_path}.{ext}"
+    with open(sidecar_path, "w") as sidecar_file:
+        sidecar_file.write(sidecar_string)
+    return sidecar_path
+
+def read_sidecar_file(file_path):
+    """
+    reads text string contents from file_path returns string
+    """
+    contents = None
+
+    try:
+        # Open the file in read mode
+        with open(file_path, 'r') as file:
+            contents = file.read()
+    except FileNotFoundError:
+        print(f"The file {file_path} does not exist.")
+    except IOError:
+        print(f"An error occurred while reading the file {file_path}.")
+
+    return(contents)
+
+def gen_sidecars_recursive(inpath):
+    for fpath in get_file_paths(inpath):
+        fchecksum = calculate_md5(fpath)
+        sidecar_path = create_sidecar_file(fpath, fchecksum)
+        side_md5 = read_sidecar_file(sidecar_path)
+        print(fchecksum, side_md5)
+
+def read_sidecars_recursive(inpath, ext='.md5'):
+    sidecar_list = []
+    for fpath in get_file_paths(inpath):
+        if fpath.endswith(ext):
+            contents = read_sidecar_file(fpath)
+            if contents:
+                ftuple = (fpath, contents)
+                sidecar_list.append(ftuple)
+    return sidecar_list
 
 if __name__ == "__main__":
     source_directory = input("Enter the photos source dir: ")

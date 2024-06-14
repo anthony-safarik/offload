@@ -60,7 +60,7 @@ class TestWalker(unittest.TestCase):
         top_level_files_folder = os.path.join(self.test_folder,'test_01_sync_top_level_files')
         os.makedirs(top_level_files_folder)
         offloader.sync_top_level_files(self.parent_directory, top_level_files_folder)
-        input('PAUSED.. hit return to continue')
+        # input('PAUSED.. hit return to continue')
 
     def test_02_recursive_sync(self):
         '''
@@ -69,7 +69,7 @@ class TestWalker(unittest.TestCase):
         subfolders_dir = os.path.join(self.test_folder,'test_02_recursive_sync')
         os.makedirs(subfolders_dir)
         offloader.sync_subfolders(self.parent_directory, subfolders_dir)
-        input('PAUSED.. hit return to continue')
+        # input('PAUSED.. hit return to continue')
 
     def test_03_dated_photo_sync(self):
         '''
@@ -81,6 +81,12 @@ class TestWalker(unittest.TestCase):
 
         # Do it again to see if the files are skipped
         offloader.rsync_dated_photos(self.thumbs, subfolders_dir)
+
+        # Make sidecar and read out contents
+        offloader.gen_sidecars_recursive(subfolders_dir)
+        sidecar_contents = offloader.read_sidecars_recursive(subfolders_dir)
+        print('**************************************')
+
         input('PAUSED.. hit return to continue')
 
 
@@ -93,7 +99,15 @@ class TestWalker(unittest.TestCase):
         # offloader.rsync_flat_dates(self.thumbs, subdir)
         offloader.walk_scr_and_copy_all_media_to_dst_in_flat_dated_format(self.thumbs, subdir)
         input('PAUSED.. hit return to continue')
-        offloader.walk_scr_and_copy_all_media_to_dst_in_flat_dated_format(self.thumbs, subdir)
+        # Make sidecars:
+        for dirname in [subdir, self.thumbs]:
+            offloader.gen_sidecars_recursive(dirname)
+            # for fname in os.listdir(dirname):
+            #     fpath = os.path.join(dirname,fname)
+            #     src_md5 = offloader.calculate_md5(fpath)
+            #     sidecar_path = offloader.create_sidecar_file(fpath, src_md5)
+            #     side_md5 = offloader.read_sidecar_file(sidecar_path)
+            #     print(src_md5, side_md5)
         input('PAUSED.. hit return to continue')
 
     def test_print_totals(self):
