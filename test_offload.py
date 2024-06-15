@@ -84,7 +84,14 @@ class TestWalker(unittest.TestCase):
 
         # Make sidecar and read out contents
         offloader.gen_sidecars_recursive(subfolders_dir)
+        offloader.gen_sidecars_recursive(self.thumbs)
+        # sidecar_contents = list(x[1] for x in offloader.read_sidecars_recursive(subfolders_dir))
+        # thumbs_contents = list(x[1] for x in offloader.read_sidecars_recursive(self.thumbs))
+        print('**************************************')
         sidecar_contents = offloader.read_sidecars_recursive(subfolders_dir)
+        thumbs_contents = offloader.read_sidecars_recursive(self.thumbs)
+        missing_stuff = offloader.filter_tuples(thumbs_contents, sidecar_contents)
+        print(missing_stuff)
         print('**************************************')
 
         input('PAUSED.. hit return to continue')
@@ -98,7 +105,7 @@ class TestWalker(unittest.TestCase):
         os.makedirs(subdir)
         # offloader.rsync_flat_dates(self.thumbs, subdir)
         offloader.walk_scr_and_copy_all_media_to_dst_in_flat_dated_format(self.thumbs, subdir)
-        input('PAUSED.. hit return to continue')
+        # input('PAUSED.. hit return to continue')
         # Make sidecars:
         for dirname in [subdir, self.thumbs]:
             offloader.gen_sidecars_recursive(dirname)
@@ -108,7 +115,7 @@ class TestWalker(unittest.TestCase):
             #     sidecar_path = offloader.create_sidecar_file(fpath, src_md5)
             #     side_md5 = offloader.read_sidecar_file(sidecar_path)
             #     print(src_md5, side_md5)
-        input('PAUSED.. hit return to continue')
+        # input('PAUSED.. hit return to continue')
 
     def test_print_totals(self):
         '''

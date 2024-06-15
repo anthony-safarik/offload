@@ -203,7 +203,7 @@ def gen_sidecars_recursive(inpath):
         fchecksum = calculate_md5(fpath)
         sidecar_path = create_sidecar_file(fpath, fchecksum)
         side_md5 = read_sidecar_file(sidecar_path)
-        print(fchecksum, side_md5)
+        # print(fchecksum, side_md5)
 
 def read_sidecars_recursive(inpath, ext='.md5'):
     sidecar_list = []
@@ -214,6 +214,15 @@ def read_sidecars_recursive(inpath, ext='.md5'):
                 ftuple = (fpath, contents)
                 sidecar_list.append(ftuple)
     return sidecar_list
+
+def filter_tuples(master_list, subset_list):
+    # Extract the second elements from the subset_list tuples
+    subset_keys = {item[1] for item in subset_list}
+    
+    # Filter the master_list tuples
+    result = [item for item in master_list if item[1] not in subset_keys]
+    
+    return result
 
 if __name__ == "__main__":
     source_directory = input("Enter the photos source dir: ")
@@ -251,6 +260,6 @@ if __name__ == "__main__":
     walker2_keys = list(walker2.file_hashes.keys())
 
     print (f'\nFiles missing from {target_directory}')
-    print(list(x for x in walker_keys if x not in walker2_keys))
+    # print(list(x for x in walker_keys if x not in walker2_keys))
 
     print('Offload Completed')
