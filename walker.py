@@ -6,6 +6,98 @@ import sys
 import hashlib
 import csv
 
+
+class PathWalker:
+    def __init__(self, input_source):
+        self.input_source = input_source
+        self.file_info = {}
+        self.file_count = 0
+        self.total_size = 0
+
+    def read_csv_special(self):
+        # Interpret the source path
+        if os.path.isfile(self.input_source) and self.input_source.endswith('.csv'):
+            csv_name = os.path.basename(self.input_source)
+            original_source_path = csv_name.replace('>','/')
+            print(f'opening csv for {original_source_path}')
+            # Open the CSV file
+            with open(self.input_source, 'r') as file:
+                # Create a DictReader object
+                reader = csv.DictReader(file)
+
+                # Iterate over each row as an OrderedDict
+                for row in reader:
+                    # Access values by key
+                    file_path = Path(row['File Path'])
+                    bytes = row['Bytes']
+                    relative_path = row['Relative Path']
+
+                    file_info_dict = self.file_info.setdefault(relative_path, row)
+                    # file_info_dict = row
+                    file_info_dict.update({
+                        'File Path': file_path #file path is the posix path object
+                            })
+                    
+                    self.file_count += 1
+                    self.total_size += int(bytes)
+        else:
+            print(f'no go for {self.input_source}')
+
+    def dump_csv(self):
+        """Dumps a csv in the source path."""
+        dicts_for_csv = list(self.file_info.values())
+        csv_file_path = os.path.join(os.path.dirname(self.input_source),self.input_source.replace('/','>')+'.csv')
+        self.write_dicts_to_csv(dicts_for_csv, csv_file_path)
+        return csv_file_path
+
+    def walk_path(self):
+        if os.path.isdir(self.input_source):
+            for root, dirs, files in os.walk(self.input_source):
+                for file_name in files:
+                    if not file_name.startswith('.'): #skip hidden files
+                        file_path = Path(root) / file_name
+
+                        file_size = file_path.stat().st_size
+                        mtime = file_path.stat().st_mtime
+                        timestamp_str = datetime.datetime.fromtimestamp(mtime).strftime('%Y%m%d%H%M%S')
+                        relative_path = str(file_path.relative_to(self.input_source))
+
+                        # Use setdefault to create / update the dictionary entry
+                        file_info_dict = self.file_info.setdefault(relative_path, {})
+                        file_info_dict.update({
+                            'File Path': file_path, #file path is the posix path object
+                            'Source Path': self.input_source,
+                            'Relative Path': relative_path,
+                            'Bytes': file_size,
+                            'Extension': file_path.suffix,
+                            'Name': file_path.stem,
+                            'MD5': '',
+                            'Timestamp': timestamp_str
+                        })
+
+                        self.file_count += 1
+                        self.total_size += file_size
+
+    @staticmethod
+    def write_dicts_to_csv(data_list, filename):
+        """
+        Writes a list of dictionaries to a CSV file.
+
+        Args:
+            data_list (list[dict]): List of dictionaries.
+            filename (str): Name of the CSV file to create.
+        """
+        try:
+            with open(filename, 'w', newline='') as csvfile:
+                fieldnames = data_list[0].keys() if data_list else []
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+                for row in data_list:
+                    writer.writerow(row)
+            print(f"Data written to {filename} successfully!")
+        except Exception as e:
+            print(f"Error writing to {filename}: {e}")
+
 class AutoWalker:
     def __init__(self, source_path):
 
@@ -14,7 +106,6 @@ class AutoWalker:
         self.file_count = 0
         self.total_size = 0
         self.file_signatures = []
-
         if os.path.isdir(source_path):
             for root, dirs, files in os.walk(self.source_path):
                 for file_name in files:
