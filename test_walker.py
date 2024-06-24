@@ -35,27 +35,84 @@ class TestWalker(unittest.TestCase):
         assert int(walker.file_count) == int(walker2.file_count)
         assert int(walker.total_size) == int(walker2.total_size)
 
+
+        # Define the path for the empty text file
+        file_path = os.path.join(walker.input_source, 'empty_parent_file.txt')
+
+        # Create the empty text file
+        with open(file_path, 'w') as file:
+            file.write('This is some noteworthy stuff right here')
+            # pass
+
         #remove file and recreate walker object
-        first_file = list(walker.file_info.keys())[1]
-        first_file_path = walker.file_info[first_file]['File Path']
-        os.remove(first_file_path)
+        # first_file = list(walker.file_info.keys())[1]
+        # first_file_path = walker.file_info[first_file]['File Path']
+        # os.remove(first_file_path)
+
+        # Recreate walker object with added text tile
         walker = PathWalker(self.test_folder+'/THMBNL') #set walker to a directory
         walker.walk_path() # walk it
+        print('-----unfiltered-------',walker.file_count,walker2.file_count)
 
-        # Make sure the count and size is the same
-        assert int(walker.file_count) == int(walker2.file_count) - 1
+        # Make sure the count and size are now not the same
+        assert int(walker.file_count) == int(walker2.file_count) + 1
         assert int(walker.total_size) != int(walker2.total_size)
 
-        # here is how to check which file is missing
+        # Dump csv with the added file
+        new_csv_name = self.test_folder + '/csv_with_txt.csv'
+        walker.dump_csv(new_csv_name)
+
+        def meets_conditions(text):
+            # text = str(posix_path)
+            extensions=('jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mkv', 'arw', 'mov')
+            if os.path.basename(text).startswith('.'):
+                print(f'{text} does not meet conditions')
+                return False
+            if not text.lower().endswith(extensions):
+                print(f'{text} does not meet conditions')
+                return False
+            print(f'{text} OK')
+            return True
+
+        # Recreate walker object without added text tile
+        walker = PathWalker(self.test_folder+'/THMBNL') #set walker to a directory
+        walker.walk_path_filtered(meets_conditions) # walk it
+        print('-----filtered-------',walker.file_count,walker2.file_count)
+
+        # Make a filtered walker from the csv
+        walker3 = PathWalker(new_csv_name)
+        walker3.read_csv_special_filtered(meets_conditions)
+        print('WALKER3')
+        for i in walker3.file_info.values():
+            print(i['File Path'])
+
+        # Make unfiltered walker from the csv
+        walker4 = PathWalker(new_csv_name)
+        walker4.read_csv_special()
+        print('WALKER4')
+        for i in walker4.file_info.values():
+            print(i['File Path'])
+
+        # Now filtered csv walker should match filtered path walker
+        # Make sure the count and size is the same
+        assert int(walker.file_count) == int(walker3.file_count)
+        assert int(walker.total_size) == int(walker3.total_size)
+
+        # And the unfiltered walker doesn't match
+        assert int(walker.file_count) == int(walker4.file_count) -1
+        assert int(walker.total_size) != int(walker4.total_size)
+
+        # if any file is missing...
         walker_set = set(walker.file_info.keys())
         walker2_set = set(walker2.file_info.keys())
         diff_set = walker2_set - walker_set
         print (f'\nremoved file:{diff_set}')
-        print (f'\nsource: {walker.input_source}\ncount: {walker.file_count}\nsize: {walker.total_size}')
+        print (f'source: {walker.input_source} count: {walker.file_count} size: {walker.total_size}')
+        # print(walker.file_info)
 
 
 
-        # input('PAUSED')
+        input('PAUSED')
 
 if __name__ == "__main__":
     unittest.main()
