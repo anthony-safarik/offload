@@ -138,6 +138,38 @@ class PathWalker:
                         self.file_count += 1
                         self.total_size += file_size
 
+    def time_it(func):
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            print(f"Function {func.__name__} took {end_time - start_time} seconds to run.")
+            return result
+        return wrapper
+
+
+    @property
+    def file_paths(self):
+        return [inner_dict.get("File Path") for inner_dict in self.file_info.values() if "File Path" in inner_dict]
+
+
+
+    @time_it
+    def get_file_md5(self):
+        # for file_path in self.file_paths.values():
+        for file_path in self.file_paths:
+            full_file_path = str(file_path.resolve())
+            # Calculate the MD5 hash
+            file_hash = self.calculate_md5(full_file_path)
+            # Get the relative path
+            relative_path = str(file_path.relative_to(self.input_source))
+
+            # Use setdefault to create / update the dictionary entry
+            file_info_dict = self.file_info.setdefault(relative_path, {})
+            file_info_dict.update({
+                'MD5': file_hash
+            })
+
     @staticmethod
     def write_dicts_to_csv(data_list, filename):
         """
@@ -157,6 +189,15 @@ class PathWalker:
             print(f"Data written to {filename} successfully!")
         except Exception as e:
             print(f"Error writing to {filename}: {e}")
+
+    @staticmethod
+    def calculate_md5(file_path):
+        """Calculate the MD5 hash of a file."""
+        md5_hash = hashlib.md5()
+        with open(file_path, "rb") as file:
+            for chunk in iter(lambda: file.read(4096), b""):
+                md5_hash.update(chunk)
+        return md5_hash.hexdigest()
 
 class AutoWalker:
     def __init__(self, source_path):

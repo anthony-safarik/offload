@@ -23,6 +23,10 @@ class TestWalker(unittest.TestCase):
         # Create Walker from dir
         walker = PathWalker(self.test_folder+'/THMBNL')
         walker.walk_path() # walk it
+
+        # Calculate MD5
+        walker.get_file_md5()
+
         print (f'\nsource: {walker.input_source}\ncount: {walker.file_count}\nsize: {walker.total_size}')
         dumped_csv_fpath = walker.dump_csv() # dump it
 
@@ -42,12 +46,6 @@ class TestWalker(unittest.TestCase):
         # Create the empty text file
         with open(file_path, 'w') as file:
             file.write('This is some noteworthy stuff right here')
-            # pass
-
-        #remove file and recreate walker object
-        # first_file = list(walker.file_info.keys())[1]
-        # first_file_path = walker.file_info[first_file]['File Path']
-        # os.remove(first_file_path)
 
         # Recreate walker object with added text tile
         walker = PathWalker(self.test_folder+'/THMBNL') #set walker to a directory
@@ -77,21 +75,14 @@ class TestWalker(unittest.TestCase):
         # Recreate walker object without added text tile
         walker = PathWalker(self.test_folder+'/THMBNL') #set walker to a directory
         walker.walk_path_filtered(meets_conditions) # walk it
-        print('-----filtered-------',walker.file_count,walker2.file_count)
 
         # Make a filtered walker from the csv
         walker3 = PathWalker(new_csv_name)
         walker3.read_csv_special_filtered(meets_conditions)
-        print('WALKER3')
-        for i in walker3.file_info.values():
-            print(i['File Path'])
 
         # Make unfiltered walker from the csv
         walker4 = PathWalker(new_csv_name)
         walker4.read_csv_special()
-        print('WALKER4')
-        for i in walker4.file_info.values():
-            print(i['File Path'])
 
         # Now filtered csv walker should match filtered path walker
         # Make sure the count and size is the same
@@ -103,12 +94,11 @@ class TestWalker(unittest.TestCase):
         assert int(walker.total_size) != int(walker4.total_size)
 
         # if any file is missing...
-        walker_set = set(walker.file_info.keys())
-        walker2_set = set(walker2.file_info.keys())
-        diff_set = walker2_set - walker_set
-        print (f'\nremoved file:{diff_set}')
-        print (f'source: {walker.input_source} count: {walker.file_count} size: {walker.total_size}')
-        # print(walker.file_info)
+        # walker_set = set(walker.file_info.keys())
+        # walker2_set = set(walker2.file_info.keys())
+        # diff_set = walker2_set - walker_set
+        # print (f'\nremoved file:{diff_set}')
+        # print (f'source: {walker.input_source} count: {walker.file_count} size: {walker.total_size}')
 
 
 
