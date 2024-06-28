@@ -37,6 +37,9 @@ class PathWalker:
                     file_info_dict.update({
                         'File Path': file_path #file path is the posix path object
                             })
+                    file_info_dict.update({
+                        'Bytes': int(bytes) #file path is the posix path object
+                            })
                     
                     self.file_count += 1
                     self.total_size += int(bytes)
@@ -67,6 +70,9 @@ class PathWalker:
                         # file_info_dict = row
                         file_info_dict.update({
                             'File Path': file_path #file path is the posix path object
+                                })
+                        file_info_dict.update({
+                            'Bytes': int(bytes) #file path is the posix path object
                                 })
                         
                         self.file_count += 1
@@ -138,6 +144,16 @@ class PathWalker:
                         self.file_count += 1
                         self.total_size += file_size
 
+    def diff_file_info(self,other, info_type):
+        this_file_info = [inner_dict.get(info_type) for inner_dict in self.file_info.values() if info_type in inner_dict]
+        other_file_info = [inner_dict.get(info_type) for inner_dict in other.file_info.values() if info_type in inner_dict]
+        for i in this_file_info:
+            print(i,type(i))
+        for i in other_file_info:
+            print(i,type(i))
+        diff_list = list(set(other_file_info)-set(this_file_info))
+        return diff_list
+    
     def time_it(func):
         def wrapper(*args, **kwargs):
             start_time = time.time()
@@ -151,11 +167,16 @@ class PathWalker:
     @property
     def file_paths(self):
         return [inner_dict.get("File Path") for inner_dict in self.file_info.values() if "File Path" in inner_dict]
+    
+    @property
+    def file_hashes(self):
+        return [inner_dict.get("MD5") for inner_dict in self.file_info.values() if "MD5" in inner_dict]
 
 
 
     @time_it
     def get_file_md5(self):
+        total_calc_bytes = 0
         # for file_path in self.file_paths.values():
         for file_path in self.file_paths:
             full_file_path = str(file_path.resolve())
@@ -169,6 +190,10 @@ class PathWalker:
             file_info_dict.update({
                 'MD5': file_hash
             })
+            total_calc_bytes += file_path.stat().st_size
+            print(f"{str(100 * float(total_calc_bytes)/float(self.total_size)).split('.')[0]}% of hashes calculated... ({total_calc_bytes} of {self.total_size} bytes) ")
+
+
 
     @staticmethod
     def write_dicts_to_csv(data_list, filename):

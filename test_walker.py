@@ -23,7 +23,7 @@ class TestWalker(unittest.TestCase):
         # Create Walker from dir
         walker = PathWalker(self.test_folder+'/THMBNL')
         walker.walk_path() # walk it
-
+        
         # Calculate MD5
         walker.get_file_md5()
 
@@ -71,6 +71,7 @@ class TestWalker(unittest.TestCase):
                 return False
             print(f'{text} OK')
             return True
+        
 
         # Recreate walker object without added text tile
         walker = PathWalker(self.test_folder+'/THMBNL') #set walker to a directory
@@ -94,13 +95,26 @@ class TestWalker(unittest.TestCase):
         assert int(walker.total_size) != int(walker4.total_size)
 
         # if any file is missing...
+
         # walker_set = set(walker.file_info.keys())
         # walker2_set = set(walker2.file_info.keys())
         # diff_set = walker2_set - walker_set
         # print (f'\nremoved file:{diff_set}')
         # print (f'source: {walker.input_source} count: {walker.file_count} size: {walker.total_size}')
 
+        walker4 = PathWalker(self.test_folder + '/THMBNL')
+        walker4.walk_path()
+        walker4.get_file_md5()
 
+        # compare MD5s and see what's missing
+        print(f'walker2 hashes {walker2.file_hashes}')
+        print(f'walker4 hashes {walker4.file_hashes}')
+
+        missing_md5s = list(set(walker4.file_hashes)-set(walker2.file_hashes))
+        print(missing_md5s)
+
+        missing_value = walker2.diff_file_info(walker4,'Bytes')
+        print(missing_value)
 
         input('PAUSED')
 
