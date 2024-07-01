@@ -5,6 +5,7 @@ import datetime
 import sys
 import hashlib
 import csv
+import subprocess
 
 
 class PathWalker:
@@ -188,6 +189,23 @@ class PathWalker:
             })
             total_calc_bytes += file_path.stat().st_size
             print(f"{str(100 * float(total_calc_bytes)/float(self.total_size)).split('.')[0]}% of hashes calculated... ({total_calc_bytes} of {self.total_size} bytes) ")
+
+    @time_it
+    def rsync_dated(self, dst):
+        total_calc_bytes = 0
+        # for file_path in self.file_paths.values():
+        for inner_dict in self.file_info.values():
+            full_file_path = str(inner_dict['File Path'].resolve())
+            date = inner_dict['Timestamp'][0:8]
+            file_size = inner_dict['Bytes']
+            new_name = date + '-' + os.path.basename(full_file_path)
+            full_dst_path = os.path.join(dst,new_name)
+            # print(full_file_path, date, new_name)
+            os.makedirs(dst, exist_ok=True)
+            subprocess.run(['rsync', '-a', full_file_path, full_dst_path])
+
+            total_calc_bytes += file_size
+            print(f"{str(100 * float(total_calc_bytes)/float(self.total_size)).split('.')[0]}% of files copied... ({total_calc_bytes} of {self.total_size} bytes) ")
 
 
 

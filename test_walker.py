@@ -116,7 +116,11 @@ class TestWalker(unittest.TestCase):
         missing_value = walker2.diff_file_info(walker4,'Bytes')
         print(f'Bytes entries in walker4 not present in walker2:{missing_value}')
 
-        # input('PAUSED')
+
+        print('***************')
+        walker2.rsync_dated(self.test_folder + '/dst')
+
+        input('PAUSED')
 
 if __name__ == "__main__":
     unittest.main()
