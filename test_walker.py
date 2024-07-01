@@ -111,12 +111,12 @@ class TestWalker(unittest.TestCase):
         print(f'walker4 hashes {walker4.file_hashes}')
 
         missing_md5s = list(set(walker4.file_hashes)-set(walker2.file_hashes))
-        print(missing_md5s)
+        print(f'MD5 in walker4 not present in walker2:{missing_md5s}')
 
         missing_value = walker2.diff_file_info(walker4,'Bytes')
-        print(missing_value)
+        print(f'Bytes entries in walker4 not present in walker2:{missing_value}')
 
-        input('PAUSED')
+        # input('PAUSED')
 
 if __name__ == "__main__":
     unittest.main()
